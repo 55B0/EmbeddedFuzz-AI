@@ -2,7 +2,7 @@
 
 *Exploring AI-Assisted Protocol Fuzzing for Embedded Systems*
 
-> **Status: Early development — architecture and research foundation.** This repository currently contains documentation only. There is no simulator, fuzzer, agent, benchmark, or runnable setup yet.
+> **Status: Phase 1 complete.** The C reference target and three challenge variants passed conformance checks on Windows with Visual Studio 2022 Build Tools.
 
 Embedded software often accepts compact binary messages that must be parsed safely despite malformed or unexpected input. Fuzzing can exercise these parsers, but different test generation strategies may reach different behaviors at different costs.
 
@@ -38,7 +38,7 @@ LangGraph is proposed for planning and adaptation. Deterministic Python code wil
 | Technology | Role | Current state |
 | --- | --- | --- |
 | Markdown and Mermaid | Project documentation and proposed architecture | In use |
-| C | Local synthetic target | Planned |
+| C | Local synthetic target | Implemented and tested on Windows |
 | Python | Shared harness, baselines, evaluation | Planned |
 | LangGraph `StateGraph` | Bounded AI-assisted test generation | Planned |
 | Coverage tooling and an LLM provider | Instrumentation and optional agent inference | To be selected |
@@ -46,18 +46,44 @@ LangGraph is proposed for planning and adaptation. Deterministic Python code wil
 ## Roadmap
 
 - [x] **Phase 0:** Scope, proposed architecture, research plan, and public documentation.
-- [ ] **Phase 1:** Documented binary protocol and local C reference and challenge targets.
+- [x] **Phase 1:** Documented binary protocol and local C reference and challenge targets.
 - [ ] **Phase 2:** Shared execution harness, conventional baselines, saved inputs, and basic replay.
 - [ ] **Phase 3:** Bounded LangGraph agent with structured output and mock-model tests.
 - [ ] **Phase 4:** Coverage guidance, failure minimization, and improved deduplication.
 - [ ] **Phase 5:** Reproducible benchmarking and comparison.
 - [ ] **Phase 6:** Optional hardware integration.
 
-Milestones and acceptance criteria are in the [development roadmap](docs/development-roadmap.md). The initial [protocol design](docs/protocol-design.md) is a proposal, not an implemented or finalized specification.
+Milestones and acceptance criteria are in the [development roadmap](docs/development-roadmap.md). The [protocol specification](docs/protocol-design.md) defines the Phase 1 wire format.
 
 ## Getting started
 
-Read the [architecture](docs/architecture.md), [research questions](docs/research-questions.md), [roadmap](docs/development-roadmap.md), and [protocol proposal](docs/protocol-design.md). There are no install, build, or test commands yet. Phase 1 will introduce the first runnable target and document its setup.
+On Windows, open the **x64 Native Tools Command Prompt for VS 2022** with the C++ Build Tools and Windows SDK installed. Run from the repository root:
+
+```bat
+if not exist build mkdir build
+cl /nologo /std:c11 /W4 /WX /Fobuild\reference.obj /Febuild\reference.exe src\target.c
+for %i in (1 2 3) do cl /nologo /std:c11 /W4 /WX /DEF_FAULT=%i /Fobuild\fault-%i.obj /Febuild\fault-%i.exe src\target.c
+python tests/test_target.py build\reference.exe build\fault-1.exe build\fault-2.exe build\fault-3.exe
+```
+
+On Linux or WSL, use a C11 compiler and Python 3. Run from the repository root:
+
+```sh
+mkdir -p build
+cc -std=c11 -Wall -Wextra -Wpedantic -Werror src/target.c -o build/reference
+for fault in 1 2 3; do
+    cc -std=c11 -Wall -Wextra -Wpedantic -Werror -DEF_FAULT="$fault" src/target.c -o "build/fault-$fault" || exit 1
+done
+python3 tests/test_target.py build/reference build/fault-1 build/fault-2 build/fault-3
+```
+
+Try a binary `PING`:
+
+```sh
+printf '\105\106\001\001\000\000' | ./build/reference | od -An -tx1
+```
+
+The expected output is `00 00 00`. The [architecture](docs/architecture.md) and [evaluation plan](docs/research-questions.md) explain how later phases will use these targets.
 
 ## Limits and future work
 

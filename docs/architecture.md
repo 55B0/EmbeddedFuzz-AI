@@ -1,6 +1,6 @@
 # Proposed architecture
 
-**Status:** Phase 0 design. No runtime components are implemented.
+**Status:** Phase 1 C targets passed conformance checks on Windows with MSVC. The harness, generators, and evaluation workflow below are planned.
 
 ## Smallest useful system
 

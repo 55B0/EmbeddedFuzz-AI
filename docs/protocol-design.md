@@ -1,10 +1,10 @@
-# Binary protocol design proposal
+# Binary protocol specification
 
-**Status:** Phase 0 proposal, not an implemented or finalized specification. Values below are recommended defaults for Phase 1 review.
+**Status:** Version 1 specification for the Phase 1 target.
 
 ## Scope and framing
 
-Use one request frame per process, read from standard input until EOF. Emit one binary response on standard output. Each process starts from deterministic defaults; no state persists across test cases. Extra frames or trailing bytes are invalid rather than silently ignored. Stateful sequences are deferred.
+Use one request frame per process. The target reads binary standard input until EOF or until it receives a 71st byte, which is enough to reject an oversized request. It emits one binary response on standard output. Each process starts from deterministic defaults. Extra frames and trailing bytes are invalid.
 
 | Offset | Field | Proposed encoding |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ Omit a checksum initially: it adds an integrity gate that can obscure parser exp
 
 These commands exercise dispatch, command-specific length checks, a bounded lookup, and variable-length copying without configuration state. Sensor values are synthetic constants, not physical readings. Sequence IDs, configuration writes, and resets are unnecessary for one-request processes and are deferred.
 
-## Response and rejection proposal
+## Response and rejection
 
 Use a three-byte response header: one status byte followed by an unsigned 16-bit little-endian data length, then exactly that many data bytes. Maximum response length is 67 bytes. Error responses have no data.
 
@@ -40,12 +40,18 @@ Use a three-byte response header: one status byte followed by an unsigned 16-bit
 | `03` | Unsupported command |
 | `04` | Invalid command payload length or sensor ID |
 
-Recommended validation order: frame size and magic, version, command, then command payload. A well-handled request, including protocol rejection, exits normally with code zero. Crashes and diagnostics are recorded separately from protocol status. Phase 1 must specify internal I/O failure behavior.
+Validation order is frame size, magic, and declared length, then version, command, and command payload. A handled request, including a protocol rejection, exits with code zero. A detected stream setup, read, or write failure emits a diagnostic on standard error and returns exit code 1. A write failure may leave a partial response.
 
-Example proposal: request `45 46 01 01 00 00` is a valid `PING` and should return `00 00 00`. Empty input should return `01 00 00`. These are specification examples, not measured executions.
+| Request bytes | Expected response bytes | Meaning |
+| --- | --- | --- |
+| `45 46 01 01 00 00` | `00 00 00` | PING |
+| `45 46 01 02 01 00 00` | `00 02 00 64 00` | READ_SENSOR, sensor 0 |
+| `45 46 01 03 02 00 00 FF` | `00 02 00 00 FF` | ECHO, two bytes |
+| `45 46 01 02 01 00` | `01 00 00` | Missing payload |
+| `45 46 02 01 00 00` | `02 00 00` | Unsupported version |
+| `45 46 01 FF 00 00` | `03 00 00` | Unsupported command |
+| `45 46 01 02 01 00 FF` | `04 00 00` | Invalid sensor ID |
 
-## Phase 1 review and tests
+## Conformance and challenge targets
 
-Finalize error precedence and stream behavior, then create hand-reviewed examples for all commands and errors. Test lengths around 0, 1, 63, 64, and 65; truncated headers; mismatched declarations; invalid sensor IDs; unsupported versions and commands; and trailing bytes. The reference target must be checked against these expectations, not used as its own sole oracle.
-
-Recommend three individually enabled challenge faults: a copy-bound fault, an unchecked sensor index, and an incorrect length-validation rule. These are proposed fault families, not existing vulnerabilities. The evaluator will assign identifiers and save triggers when implemented; generator access and attribution are governed by the [research plan](research-questions.md).
+The [conformance checks](../tests/test_target.py) compare process output with exact expected bytes and verify each challenge build against its evaluator fixture. The default build excludes all three injected faults. Each challenge build enables one semantic fault, allowing repeatable failures without relying on undefined behavior. Generator access and attribution are governed by the [research plan](research-questions.md).

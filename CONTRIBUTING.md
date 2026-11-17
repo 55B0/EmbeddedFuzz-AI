@@ -1,6 +1,6 @@
 # Contributing
 
-EmbeddedFuzz-AI is in its documentation phase. Issues and pull requests that clarify the research design, threat model, protocol proposal, or reproducibility criteria are welcome.
+EmbeddedFuzz-AI is developing its Phase 1 C target. Issues and pull requests that clarify protocol behavior, conformance tests, or the research design are welcome.
 
 Before proposing a change, read the [architecture](docs/architecture.md), [research questions](docs/research-questions.md), and [roadmap](docs/development-roadmap.md). Keep contributions small and explain the reason for each design choice. Label proposed behavior as proposed, and distinguish observations from hypotheses. Do not add benchmark figures without reproducible experiment conditions and data.
 

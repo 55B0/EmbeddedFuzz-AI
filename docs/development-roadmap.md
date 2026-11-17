@@ -1,6 +1,6 @@
 # Development roadmap
 
-Only Phase 0 is complete. Runtime phases are proposed; acceptance requires demonstrated behavior, not merely file creation.
+Phases 0 and 1 are complete. Phase 1 builds and conformance checks passed on Windows with MSVC 14.44.
 
 ## Phase 0 — Foundation
 
@@ -12,11 +12,11 @@ Only Phase 0 is complete. Runtime phases are proposed; acceptance requires demon
 
 ## Phase 1 — Local C targets
 
-- [ ] Finalized initial protocol, reference target, and separate challenge variants.
+- [x] Finalized initial protocol, reference target, and separate challenge variants.
 - **Learning:** Binary parsing, bounds checks, compiler diagnostics, and specification-based tests.
 - **Outcome:** One request can be processed locally, with expected success or rejection.
 - **Acceptance:** Documented build and test commands work; reviewed valid, invalid, and boundary cases pass on the reference; each challenge variant has an evaluator-only manifest and reproducible trigger; injected faults are absent from the reference build.
-- **Dependencies:** Finalize [protocol defaults](protocol-design.md), choose a host/toolchain, and specify internal I/O errors.
+- **Dependencies:** [Version 1 protocol specification](protocol-design.md) and a C11 toolchain.
 
 ## Phase 2 — Harness, baselines, and replay
 
@@ -60,4 +60,4 @@ Only Phase 0 is complete. Runtime phases are proposed; acceptance requires demon
 
 ## Recommended next task
 
-Review the six-byte request header, three commands, 64-byte payload limit, error precedence, and fresh-process semantics. Finalize these as the Phase 1 specification and hand-reviewed byte/response examples before implementing the parser. Recommend Linux or WSL as the first documented host; defer provider choice and stateful sequences.
+Start Phase 2 with a Python harness that runs one saved request against a selected target, enforces a timeout, and records the exact request and observed response so the case can be replayed.
