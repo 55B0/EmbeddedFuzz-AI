@@ -1,0 +1,25 @@
+# Local editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Future Python and C build artifacts
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.o
+*.obj
+*.exe
+*.gcda
+*.gcno
+*.gcov
+
+# Local configuration and generated experiment data
+.env
+.env.*
+!.env.example
+results/
+artifacts/
